@@ -1,0 +1,1 @@
+What is the size of an int data type in Java?|1 byte|2 bytes|4 bytes|8 bytes|3

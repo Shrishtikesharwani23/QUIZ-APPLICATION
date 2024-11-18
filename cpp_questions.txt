@@ -1,0 +1,1 @@
+Which of the following is the correct way to declare a pointer in C++?|int ptr;|int*ptr;|ptr int;|int &ptr;|2

@@ -1,0 +1,372 @@
+import os
+import random
+import secrets
+
+USER_FILE = "users.txt"
+RESULT_FILE = "results.txt"
+QUESTIONS_FILES = {
+    "python": "python_questions.txt",
+    "cpp": "cpp_questions.txt",
+    "java": "java_questions.txt"
+}
+
+
+# Load users from the file
+def load_users():
+    users = {}
+    if os.path.exists(USER_FILE):
+        with open(USER_FILE, 'r') as file:
+            for line in file:
+                username, enrollment_number, contact_number, password = line.strip().split(',')
+                users[username] = {"enrollment_number": enrollment_number, "contact_number": contact_number,
+                                   "password": password}
+    return users
+
+
+# Save a new user to the file
+def save_user(username, enrollment_number, contact_number, password):
+    with open(USER_FILE, 'a') as file:
+        file.write(f"{username},{enrollment_number},{contact_number},{password}\n")
+
+
+# Registration function
+def register():
+    users = load_users()
+    print("Registration")
+    username = input("Enter your username: ")
+    if username in users:
+        print("Username already exists. Try a different one.")
+        return False
+    enrollment_number = input("Enter your enrollment number: ")
+    contact_number = input("Enter your contact number: ")
+    password = generate_random_password()
+    save_user(username, enrollment_number, contact_number, password)
+    print(f"Registration successful! Your password is: {password}")
+    return True
+
+
+# Generate a random password
+def generate_random_password(length=8):
+    alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()'
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
+# Login function
+def login():
+    users = load_users()
+    print("Login")
+    username = input("Enter your username: ")
+    password = input("Enter your password: ")
+    if username in users and users[username]["password"] == password:
+        print("Login successful!")
+        return username
+    else:
+        print("Invalid credentials!")
+        return None
+
+
+# Load questions from file
+def load_questions(subject):
+    questions = []
+    file_path = QUESTIONS_FILES.get(subject)
+    if file_path and os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            for line in file:
+                parts = line.strip().split('|')
+                if len(parts) >= 3:
+                    question = parts[0]
+                    options  = parts[1:-1]
+                    answer = parts[-1]
+                    questions.append({"question": question,"options":options, "answer": answer})
+    return questions
+
+
+# Save quiz results
+def save_result(username, score, total_questions):
+    print("\n--- Quiz Result ---")
+    print(f"Your score: {score}/{total_questions}")
+    percentage = (score / total_questions) * 100
+    print(f"Percentage: {percentage:.2f}%")
+
+    if percentage >= 75:
+        print("Congratulations! You passed the quiz.")
+    else:
+        print("Better luck next time.")
+
+    with open(RESULT_FILE, 'a') as file:
+        file.write(f"{username},{score},{total_questions},{percentage:.2f}%\n")
+
+
+# Quiz function
+def quiz(username):
+    print("Attempt Quiz")
+    print("1: Python\n2: C++\n3: Java")
+    choice = input("Choose a language (1/2/3): ")
+
+    subject_map = {'1': 'python', '2': 'cpp', '3': 'java'}
+    subject = subject_map.get(choice)
+
+    if not subject:
+        print("Invalid choice")
+        return
+
+    questions = load_questions(subject)
+    if len(questions) < 25:
+        print(
+            f"Not enough questions available for {subject.capitalize()}! Only {len(questions)} questions are available.")
+        return
+
+    selected_questions = random.sample(questions, 5)
+    score = 0
+    total_questions = len(selected_questions)
+
+    for q in selected_questions:
+        print("\n" + q["question"])
+        for option in q["options"]:
+            print(option)
+        answer = input("Enter your answer: ").strip()
+        if answer == q["answer"]:
+            print("Correct!\n")
+            score += 1
+        else:
+            print(f"Wrong! The correct answer was: {q['answer']}\n")
+
+    save_result(username, score, total_questions)
+
+
+# Create question files
+def create_question_files():
+    questions = {
+        "python": [
+            {"question": "What is the correct file extension for python files?",
+             "option": ["1. .python", "2. .py", "3. .pt", "4. .pyt"], "answer": "2"},
+            {"question": "What is the correct way to create a function in python?",
+             "option": ["1. function myFunction():", "2. def myFuction():", "3. create myFuction():",
+                        "4. fun myFuction():"], "answer": "2"},
+            {"question": "Which of the following is used to define a class in python?",
+             "option": ["1. function", "2. class", "3. object", "4. define"], "answer": "2"},
+            {"question": "Which keyword is used to create an anonymous function in python?",
+             "option": ["1. lambda", "2. def", "3. fun", "4. class"], "answer": "1"},
+            {"question": "Which data structure is used to store key-value pairs in python?",
+             "option": ["1. list", "2. tuple", "3. set", "4. dictionary"], "answer": "4"},
+            {"question": "What is the output of this code?\n print(2 ** 3).",
+             "option": ["1. 5", "2. 8", "3. 6", "4. 9"], "answer": "2"},
+            {"question": "Which of the statement is correct to check if'a' is greater than'b'?",
+             "option": ["1. a>b", "2. a=>b", "3. a>=b", "4. a<=>b"], "answer": "1"},
+            {"question": "Which function is used to get the length of a list in python?",
+             "option": ["1. count()", "2. size()", "3. len()", "4. length()"], "answer": "3"},
+            {"question": "Which of the following is not a valid python keyword?",
+             "option": ["1. pass", "2. return", "3. yield", "4. loop"], "answer": "4"},
+            {"question": "What is the output of this code?\nx='Hello'\nprint(x[1])",
+             "option": ["1.e", "2.H", "3.o", "4.1"], "answer": "1"},
+            {"question": "Which of the following is the correct syntax to import a module in python?",
+             "option": ["1. import module_name", "2. include module_name", "3. require module_name",
+                        "4. import(module_name)"], "answer": "1"},
+            {"question": "Which of the following methods is used to add an element at the end of a list?",
+             "option": ["1. add()", "2. append()", "3. insert()", "4. extend()"], "answer": "2"},
+            {"question": "How do you start writing a while loop in python?",
+             "option": ["1. while x>y {", "2. while (x>y)", "3. while x>y:", "4. while x>y then"], "answer": "3"},
+            {"question": "How do you write comments in python?",
+             "option": ["1. // This is a comment", "2. <!-- This is a comment --!>", "3. # This is a comment",
+                        "4. /* This is a comment */"], "answer": "3"},
+            {
+                "question": "What will be the output of the following code?\n mylist = [1,2,3]\nmylist.append([4,5]\nprint(len(mylist)))",
+                "option": ["1. 3", "2. 4", "3. 5", "4. 6"], "answer": "2"},
+            {"question": "Which of the following can be used to handle exceptions in python?",
+             "option": ["1. try", "2. catch", "3. except", "4. finally"], "answer": "3"},
+            {"question": "What is the output of the following code?\n print('Hello' + 'World')",
+             "option": ["1. Hello World", "2. HelloWorld", "3. Hello+World", "4. Syntax Error"], "answer": "2"},
+            {"question": "What is the output of the following code?\n for i in range(1,10,2):\n   print(i, end=',') ",
+             "option": ["1. 1,2,3,4,5,6,7,8,9,", "2. 1,3,5,7,9,", "3. 1,3,5,7,", "4. 2,4,6,8,"], "answer": "2"},
+            {"question": "What will the following code output?\nx = [1,2,3]\ny = x\ny.append(4)\nprint(x)",
+             "option": ["1. [1,2,3]", "2. [1,2,3,4]", "3. Error", "4. [4]"], "answer": "2"},
+            {"question": "How do you create an empty dictionary in python?",
+             "option": ["1. d = {}", "2. d = ()", "3. d = []", "4. d = set()"], "answer": "1"}
+        ],
+        "cpp": [
+            {"question": "Which of the following is the correct way to declare a pointer in c++?",
+             "option": ["1. int ptr;", "2. int*ptr;", "3. ptr int;", "4. int &ptr;"], "answer": "2"},
+            {"question": "Which of the following is the correct syntax to output 'Hello World' in c++?",
+             "option": ["1. System.out.println('Hello World');", "2. print('Hello World');", "3. cout<<'Hello World';",
+                        "4. echo('Hello World');"], "answer": "3"},
+            {"question": "What is the extension of c++ file?", "option": ["1. .c", "2. .cpp", "3. .cp", "4. .ccp"],
+             "answer": "2"},
+            {"question": "Which of the following is the address operator in c++?",
+             "option": ["1. *", "2. &", "3. @", "4. %"], "answer": "2"},
+            {"question": "Which keyword is used to define a class in c++?",
+             "option": ["1. struct", "2. class", "3. object", "4. define"], "answer": "2"},
+            {"question": "Which operator is used to access a member of a structure through a pointer variable in c++? ",
+             "option": ["1. . (dot)", "2. -> (arrow)", "3. * (asterisk)", "4. & (ampersand)"], "answer": "2"},
+            {"question": "Which of the following is not a valid keyword in c++?",
+             "option": ["1. return", "2. default", "3. null", "4. virtual"], "answer": "3"},
+            {"question": "Which of the following correctly declares an array in c++?",
+             "option": ["1. int arr[5];", "2. int arr;", "3. array int[5];", "4. arr{5};"], "answer": "1"},
+            {
+                "question": "Which feature of OOP allows reusing code by passing characteristics from one class to another?",
+                "option": ["1. Inheritance", "2. Encapsulation", "3. Abstraction", "4. Polymorphism"], "answer": "1"},
+            {"question": "What is the size of an int data type in a typical 32-bit c++ compiler?",
+             "option": ["1. 1 byte", "2. 2 bytes", "3. 4 bytes", "4. 8 bytes"], "answer": "3"},
+            {"question": "Which function is used to dynamically allocate memory in c++?",
+             "option": ["1. new", "2. malloc()", "3. alloc()", "4. allocate()"], "answer": "1"},
+            {"question": "Which of the following is used to define a constant in c++?",
+             "option": ["1. #define", "2. const", "3. static", "4. Both 1 and 2"], "answer": "4"},
+            {"question": "Which of the following is correct for function overloading in c++?",
+             "option": ["1. Functions with the same name but different return types.",
+                        "2. Functions with the same name but different parameter lists.",
+                        "3. Functions with the same name and same parameter lists.",
+                        "4. Functions with different names and parameter lists."], "answer": "2"},
+            {"question": "Which of the following is a valid destructor for the class Student?",
+             "option": ["1. Student()", "2. ~Student()", "3. delete Student()", "4. void ~Student()"], "answer": "2"},
+            {"question": "Which of the following correctly accesses the value at the address stored in a pointer ptr?",
+             "option": ["1. ptr", "2. &ptr", "3. ptr", "4. ptr"], "answer": "3"},
+            {"question": "Which of the following is not a loop structure in c++? ",
+             "option": ["1. for", "2. foreach", "3. while", "4. do-while"], "answer": "2"},
+            {"question": "Which keyword is used to prevent a function from being overridden in derived classes?",
+             "option": ["1. static", "2. final", "3. const", "4. sealed"], "answer": "3"},
+            {"question": "Which operator is used to resolve the scope in c++?",
+             "option": ["1. ::", "2. .", "3. ->", "4. #"], "answer": "1"},
+            {"question": "What is the output of the following code?\nint x = 10;\nint y = 20;\ncout << x + y;",
+             "option": ["1. 30", "2. 1020", "3. 10 + 20", "4. Error"], "answer": "1"},
+            {"question": "What is the purpose of this pointer in c++? ",
+             "option": ["1. It is used to reference the current class instance.",
+                        "2. It is used to reference the parent class.", "3. It is used to reference global variables.",
+                        "4. It is used to pass arguments to functions."], "answer": "1"}
+        ],
+        "java": [
+            {"question": "What is the size of an int data type in java?",
+             "option": ["1. 1 byte", "2. 2 bytes", "3. 4 bytes", "4. 8 bytes"], "answer": "3"},
+            {"question": "Which of the following is not a java keyword?",
+             "option": ["1. interface", "2. extends", "3. implement", "4. package"], "answer": "3"},
+            {"question": "Which method is used to start a thread in java?",
+             "option": ["1. run()", "2. start()", "3. init()", "4. resume()"], "answer": "2"},
+            {"question": "Which of the following is the correct syntax for a main method in java?",
+             "option": ["1. public static void main(String[] args)", "2. static public void main(String[] args)",
+                        "3. public void static main(String[] args)", "4. Both 1 and 2"], "answer": "4"},
+            {"question": "Which package contains the String class?",
+             "option": ["1. java.lang", "2. java.util", "3. java.io", "4. java.text"], "answer": "1"},
+            {"question": "Which of the following is used to declare a constant in java?",
+             "option": ["1. static", "2. final", "3. const", "4. abstract"], "answer": "2"},
+            {"question": "Which of these methods belongs to the object class?",
+             "option": ["1. toString()", "2. equals()", "3. hashCode()", "4. All of the above"], "answer": "4"},
+            {"question": "Which of the following loops in java checks the condition after executing the loop body?",
+             "option": ["1. for", "2. while", "3. do-while", "4. Both 2 and 3"], "answer": "3"},
+            {"question": "Which exception is thrown when an array is accessed with an illegal index in java?",
+             "option": ["1. NullPointerException", "2. ArrayIndexOutOfBoundsException", "3. ClassNotFoundException",
+                        "4. IllegalArgumentException"], "answer": "2"},
+            {"question": "Which of the followingis the default value of a boolean variable in java?",
+             "option": ["1. true", "2. false", "3. null", "4. 0"], "answer": "2"},
+            {"question": "What does the break statement do inside a loop in java?",
+             "option": ["1. Exits the loop", "2. Skips the current iteration", "3. Continues the loop",
+                        "4. Restarts the loop"], "answer": "1"},
+            {"question": "Which of the following is not a primitive data type in java?",
+             "option": ["1. byte", "2. char", "3. string", "4. float"], "answer": "3"},
+            {"question": "How many bits are used to represent a char value in java?",
+             "option": ["1. 8 bits", "2. 16 bits", "3. 32 bits", "4. 64 bits"], "answer": "2"},
+            {"question": "Which of the following is true about the super keyword in java?",
+             "option": ["1. It refers to the current object.", "2. It refers to the parent class object.",
+                        "3. It is used to call the toString() method.", "4. It is used to return from a method."],
+             "answer": "2"},
+            {"question": "Which operator is used for string concatenation in java?",
+             "option": ["1. +", "2. *", "3. &", "4. |"], "answer": "1"},
+            {"question": "Which of the following is not a feature of java?",
+             "option": ["1. Object-Oriented", "2. Architecture-Netural", "3. Pointer-based", "4. Multithreaded"],
+             "answer": "3"},
+            {"question": "Which of the following statements is correct about inheritance in java?",
+             "option": ["1. A class can inherit from multiple classes.",
+                        "2. A class can inherit from one superclass only.",
+                        "3. A class cannot inherit from any other class.",
+                        "4. A class cannot inherit from multiple interfaces."], "answer": "2"},
+            {"question": "What is the output of the following code?\nint x = 5;\nSystem.out.println(++x);",
+             "option": ["1. 5", "2. 6", "3. 7", "4. Compilation error"], "answer": "2"},
+            {"question": "Which keyword is used to prevent a class from being subclassed in java?",
+             "option": ["1. static", "2. final", "3. abstract", "4. const"], "answer": "2"},
+            {"question": "What is the return type of the hashCode() method in java?",
+             "option": ["1. int", "2. long", "3. string", "4. float"], "answer": "1"}
+        ]
+    }
+    print(f"debug: question in dictionary is {questions}")
+    options = questions.get("options,[]")
+    if not options:
+        print("error: no options provided for the question.")
+        return
+    
+    option_str ="|".join(options)
+
+    question = questions.get("question", "No question provided")
+    if question == "No question provided":
+        print("Error: Question text is missing.")
+        return
+
+    # Ensure 'answer' key exists
+    answer = questions.get("answer", "No answer provided")
+    if answer == "No answer provided":
+        print("Error: Answer text is missing.")
+        return
+
+    # Proceed with the rest of the logic to save or display question
+    print(f"Question: {question}")
+    print(f"Options: {option_str}")
+    print(f"Answer: {answer}")
+
+    # Example of saving to a file (optional)
+    file_name = "questions.txt"  # You can use dynamic file names if needed
+    try:
+        with open(file_name, "a") as file:
+            file.write(f"Question: {question}\n")
+            file.write(f"Options: {option_str}\n")
+            file.write(f"Answer: {answer}\n\n")
+        print(f"Question successfully written to {file_name}")
+    except Exception as e:
+        print(f"Error while writing to file: {e}")
+
+
+
+
+'''
+    for subject, q_list in questions.items():
+        file_path = QUESTIONS_FILES[subject]
+    with open(file_path, 'w') as file:
+        for q in q_list: 
+           option = "|".join(q.get("options",[]))
+        file.write (f"{q['question']}|{"options"}|{q['answer']}\n")
+'''
+    # Main menu
+
+
+def main():
+    create_question_files()
+
+    while True:
+        print("\n1. Registration")
+        print("2. Login")
+        print("3. Attempt quiz")
+        print("4. Exit")
+
+        choice = input("Enter your choice: ")
+        if choice == '1':
+            register()
+        elif choice == '2':
+            username = login()
+            if username:
+                while True:
+                    print("\n1. Attempt quiz")
+                    print("2. logout")
+                    sub_choice = input("enter your choice:")
+                    if sub_choice =='1':
+                        quiz(username)
+                    elif sub_choice == '2':
+                        print("logged out successfully!")    
+                        break
+                    else:
+                        print("Invalid choice.please try again.")
+        elif choice == '3':
+            print("Please login first to attempt a quiz.")
+        elif choice == '4':
+            print("Exiting the application.Goodbye!")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+
+if __name__ == "__main__":
+    main()
